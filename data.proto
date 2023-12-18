@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+message InnerMapEntry1 {
+    string inner_key = 1;
+    string inner_value = 2;
+}
+
+message OuterMapEntry1 {
+    string outer_key = 1;
+    repeated InnerMapEntry1 inner_map = 2;
+}
+
+message InnerMapEntry2 {
+    string inner_key = 1;
+    int32 inner_value = 2;
+}
+
+message OuterMapEntry2 {
+    string outer_key = 1;
+    repeated InnerMapEntry2 inner_map = 2;
+}
+
+message InnerMapEntry20 {
+    string inner_key = 1;
+    repeated InnerMapEntry1 inner_map = 2;
+}
+
+message OuterMapEntry3 {
+    string outer_key = 1;
+    repeated InnerMapEntry20 inner_map = 2;
+}
+
+message InnerMapEntry_ {
+    string inner_key = 1;
+    string inner_value = 2;
+}
+
+message MiddleMapEntry_ {
+    string middle_key = 1;
+    map<string, InnerMapEntry_> inner_map = 2;
+}
+
+message OuterMapEntry_ {
+    string outer_key = 1;
+    map<string, MiddleMapEntry_> middle_map = 2;
+}
+
+message Data{
+    string subject_id = 1;
+    //string data_dir = 2;
+    int32 num_conversations = 3;
+
+    repeated OuterMapEntry1 outer_map1 = 4;
+    repeated OuterMapEntry2 outer_map2 = 5;
+    map<string, OuterMapEntry_> outer_map = 6;
+
+}
