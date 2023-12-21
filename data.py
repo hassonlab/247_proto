@@ -179,7 +179,7 @@ def get_num_electrodes(data_dir: str, subject: str) -> List[int]:
         List[int]: A list of integers representing the number of electrodes for each conversation.
     """
     num_electrodes = []
-    conversations = get_conversations(data_dir, subject)
+    conversations = get_conversations(data_dir)
     for conversation in conversations:
         electrode_folder = get_electrode_folder(data_dir, subject, conversation)
         if os.path.isdir(electrode_folder):
@@ -372,6 +372,12 @@ def validate_flags(FLAGS):
     return project, subject, data_dir
 
 
+def pretty_print_message(message):
+    print(json.dumps(pb_message_to_dict(message), indent=2))
+    print(json.dumps(convert_map_to_dict(message, "outer_map1"), indent=2))
+    print(json.dumps(convert_map_to_dict(message, "outer_map2"), indent=2))
+
+
 def main(_):
     project, subject, data_dir = validate_flags(FLAGS)
 
@@ -402,10 +408,7 @@ def main(_):
     print("Serialized Message:")
     print(sample_message)
 
-    # print("Pretty Printed:")
-    print(json.dumps(pb_message_to_dict(data), indent=2))
-    print(json.dumps(convert_map_to_dict(data, "outer_map1"), indent=2))
-    print(json.dumps(convert_map_to_dict(data, "outer_map2"), indent=2))
+    pretty_print_message(sample_message)
 
 
 if __name__ == "__main__":
