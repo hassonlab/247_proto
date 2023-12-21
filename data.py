@@ -9,15 +9,6 @@ from absl import app, flags
 
 import data_pb2
 
-DATA_DIR = "/projects/HASSON/247/data"
-PODCAST_DATA_DIR = DATA_DIR + "/podcast-data"
-TFS_DATA_DIR = DATA_DIR + "/conversations-car"
-
-DATA_DIR_MAP = {
-    "podcast": PODCAST_DATA_DIR,
-    "tfs": TFS_DATA_DIR,
-}
-
 EXCLUDE_WORDS = ["sp", "{lg}", "{ns}", "{LG}", "{NS}", "SP"]
 
 NON_WORDS = ["hm", "huh", "mhm", "mm", "oh", "uh", "uhuh", "um"]
@@ -102,7 +93,7 @@ def extract_integer_suffix(filename: str) -> int:
 
 
 def create_sample_message(
-    my_message: data_pb2.Data, project: str, subject: str
+    my_message: data_pb2.Data, project: str, subject: str, data_dir
 ) -> data_pb2.Data:
     """
     Creates a sample message by updating the `electrode_checksums` field in `my_message` with new values.
@@ -116,7 +107,6 @@ def create_sample_message(
         The updated message object with the `electrode_checksums` field modified.
     """
     checksums = my_message.outer_map["electrode_checksums"]
-    data_dir = os.path.join(get_data_dir(project), subject)
 
     electrode_checksums = get_electrode_checksums(project, data_dir)
     for key, value in electrode_checksums.items():
@@ -158,7 +148,7 @@ def get_conversations(data_dir: str) -> List[str]:
     Returns:
         A sorted list of conversation names.
     """
-    return sorted(os.listdir(os.path.join(data_dir)))[:3]
+    return sorted(glob.glob(os.path.join(data_dir, "*")))[:3]
 
 
 def get_num_conversations(data_dir: str) -> int:
@@ -241,9 +231,7 @@ def get_electrode_folder(project: str, data_dir: str, conversation: str) -> str:
     Returns:
         str: The path to the electrode folder.
     """
-    electrode_folder = ELECTRODE_FOLDER_MAP[project][
-        os.path.basename(data_dir)
-    ]
+    electrode_folder = ELECTRODE_FOLDER_MAP[project][os.path.basename(data_dir)]
     return os.path.join(data_dir, conversation, electrode_folder)
 
 
@@ -338,19 +326,6 @@ def add_outer_map_entry(
     outer_entry.inner_map.add(inner_key=inner_key, inner_value=inner_value)
 
 
-def get_data_dir(project: str) -> Optional[str]:
-    """
-    Retrieve the data directory for the specified project.
-
-    Args:
-        project (str): The name of the project.
-
-    Returns:
-        Optional[str]: The data directory path for the project, or None if not found.
-    """
-    return DATA_DIR_MAP.get(project)
-
-
 def pb_message_to_dict(pb_message) -> Dict[str, Dict[str, Dict[str, str]]]:
     """
     Convert a protobuf message to a nested dictionary.
@@ -393,20 +368,21 @@ def validate_flags(FLAGS):
     data_dir = os.path.join(data_dir, subject)
     if not os.path.isdir(data_dir):
         raise ValueError(f"Data directory not found: {data_dir}")
-    
+
     return project, subject, data_dir
+
 
 def main(_):
     project, subject, data_dir = validate_flags(FLAGS)
 
     data = data_pb2.Data()
     data.subject_id = subject
-    data_dir = os.path.join(get_data_dir(project), subject)
 
-    data.num_conversations = get_num_conversations(data_dir)
+    conversations = get_conversations(data_dir)
+    data.num_conversations = len(conversations)
 
     # Adding conversations
-    for idx, conversation in enumerate(get_conversations(data_dir)):
+    for idx, conversation in enumerate(conversations):
         add_outer_map_entry(
             data, "outer_map1", "conversations", f"{idx:03}", conversation
         )
@@ -420,7 +396,7 @@ def main(_):
         add_outer_map_entry(data, "outer_map2", "electrode_counts", k, len(v))
 
     # Adding electrode checksums
-    sample_message = create_sample_message(data, project, subject)
+    sample_message = create_sample_message(data, project, subject, data_dir)
 
     # Print the serialized message
     print("Serialized Message:")
@@ -430,6 +406,7 @@ def main(_):
     print(json.dumps(pb_message_to_dict(data), indent=2))
     print(json.dumps(convert_map_to_dict(data, "outer_map1"), indent=2))
     print(json.dumps(convert_map_to_dict(data, "outer_map2"), indent=2))
+
 
 if __name__ == "__main__":
     app.run(main)
