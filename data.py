@@ -69,10 +69,12 @@ CONVERSATIONS_MAP = {
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project", None, "Project ID")
 flags.DEFINE_string("subject", None, "Subject ID")
+flags.DEFINE_string("data_dir", None, "Data directory")
 
 # Required flag.
 flags.mark_flag_as_required("project")
 flags.mark_flag_as_required("subject")
+flags.mark_flag_as_required("data_dir")
 
 
 def calculate_checksum(file_path, algorithm="sha256", buffer_size=65536):
@@ -377,12 +379,25 @@ def pb_message_to_dict(pb_message) -> Dict[str, Dict[str, Dict[str, str]]]:
     return result_dict
 
 
-def main(_):
+def validate_flags(FLAGS):
     project = FLAGS.project
     subject = FLAGS.subject
+    data_dir = FLAGS.data_dir
 
-    if project not in DATA_DIR_MAP:
-        raise ValueError("Unknown project: {}".format(FLAGS.project))
+    if project not in SUBJECTS:
+        raise ValueError(f"Invalid project: {project}")
+
+    if subject not in SUBJECTS[project]:
+        raise ValueError(f"Invalid subject: {subject}")
+
+    data_dir = os.path.join(data_dir, subject)
+    if not os.path.isdir(data_dir):
+        raise ValueError(f"Data directory not found: {data_dir}")
+    
+    return project, subject, data_dir
+
+def main(_):
+    project, subject, data_dir = validate_flags(FLAGS)
 
     data = data_pb2.Data()
     data.subject_id = subject
