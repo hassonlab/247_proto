@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 from absl import app
 from absl import flags
 
@@ -25,9 +23,7 @@ def list_patient(patient_info):
 
 
 def main(_):
-    # Reads the patient information from a file and prints all
-    # the information inside.
-
+    # Reads the patient information from a file and prints the information.
     input_file = FLAGS.input_file
     patient_info = patientinfo_pb2.PatientInfo()
 

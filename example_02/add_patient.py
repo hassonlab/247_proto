@@ -1,10 +1,8 @@
-from collections import defaultdict
 from datetime import datetime
 import glob
 import hashlib
-import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import List
 
 from absl import app
 from absl import flags
@@ -44,14 +42,6 @@ DATUM_FILE_MAP = {
     ),
     "tfs": dict.fromkeys(["625", "676"], "*trimmed.txt")
     | dict.fromkeys(["7170", "798"], "*_datum_trimmed.txt"),
-}
-
-CONVERSATIONS_MAP = {
-    "podcast": dict.fromkeys(
-        SUBJECTS["podcast"],
-        1,
-    ),
-    "tfs": dict.fromkeys(["625", "676", "7170", "798"], [54, 78, 24, 15]),
 }
 
 
@@ -97,54 +87,6 @@ def extract_integer_suffix(filename: str) -> int:
     return int(os.path.splitext(filename)[0].split("_")[-1])
 
 
-def create_sample_message(
-    my_message: patientinfo_pb2.PatientInfo, project: str, subject: str, data_dir
-) -> patientinfo_pb2.PatientInfo:
-    """
-    Creates a sample message by updating the `electrode_checksums` field in `my_message` with new values.
-
-    Args:
-        my_message: The original message object.
-        project: The project name.
-        subject: The subject name.
-
-    Returns:
-        The updated message object with the `electrode_checksums` field modified.
-    """
-    checksums = my_message.outer_map["electrode_checksums"]
-
-    electrode_checksums = get_electrode_checksums(project, data_dir)
-    for key, value in electrode_checksums.items():
-        middle_entry = checksums.middle_map[key]
-
-        for k, v in value.items():
-            inner_entry = middle_entry.inner_map[k]
-            inner_entry.inner_value = v
-
-    return my_message
-
-
-def convert_map_to_dict(
-    data: patientinfo_pb2.PatientInfo, outer_map
-) -> Dict[str, Dict[str, str]]:
-    """
-    Convert a map object to a nested dictionary.
-
-    Args:
-        data (Map): The map object to convert.
-
-    Returns:
-        dict: The nested dictionary representation of the map object.
-    """
-    nested_dict: Dict[str, Dict[str, str]] = {}
-    for outer_entry in getattr(data, outer_map):
-        inner_dict = {
-            entry.inner_key: entry.inner_value for entry in outer_entry.inner_map
-        }
-        nested_dict[outer_entry.outer_key] = inner_dict
-    return nested_dict
-
-
 def get_conversations(data_dir: str) -> List[str]:
     """
     Get a sorted list of conversation names from the given data directory.
@@ -156,74 +98,6 @@ def get_conversations(data_dir: str) -> List[str]:
         A sorted list of conversation names.
     """
     return sorted(glob.glob(os.path.join(data_dir, "*")))[:3]
-
-
-def get_num_conversations(data_dir: str) -> int:
-    """
-    Returns the number of conversations in the given data directory.
-
-    Args:
-        data_dir (str): The path to the data directory.
-
-    Returns:
-        int: The number of conversations.
-    """
-    conversations = get_conversations(data_dir)
-    num_conversations = len(conversations)
-    return num_conversations
-
-
-def get_num_electrodes(data_dir: str, subject: str) -> List[int]:
-    """
-    Get the number of electrodes for each conversation in the given data directory
-    for the specified subject.
-
-    Args:
-        data_dir (str): The directory containing the data.
-        subject (str): The subject name.
-
-    Returns:
-        List[int]: A list of integers representing the number of electrodes for each conversation.
-    """
-    num_electrodes = []
-    conversations = get_conversations(data_dir)
-    for conversation in conversations:
-        electrode_folder = get_electrode_folder(data_dir, subject, conversation)
-        if os.path.isdir(electrode_folder):
-            num_electrodes.append(len(os.listdir(electrode_folder)))
-    return num_electrodes
-
-
-def get_datum_checksums(project: str, data_dir: str, subject: str) -> Dict[str, str]:
-    """
-    Calculates the checksum for each datum file in the given project, data directory, and subject.
-
-    Args:
-        project (str): The name of the project.
-        data_dir (str): The path to the data directory.
-        subject (str): The subject of the datum files.
-
-    Returns:
-        dict: A dictionary where the keys are conversation names and the values are the checksums of the corresponding datum files.
-    """
-    datum_file_dict = {}
-
-    for conversation in get_conversations(data_dir):
-        full_path = os.path.join(data_dir, conversation)
-
-        if os.path.isdir(os.path.join(full_path, "misc")):
-            datum_prefix = DATUM_FILE_MAP[project][subject]
-
-            datum_files = glob.glob(os.path.join(full_path, "misc", datum_prefix))
-
-            if len(datum_files) == 1:
-                datum_file = datum_files[0]
-
-                checksum = calculate_checksum(datum_file)
-
-                datum_file_dict[conversation] = checksum
-
-    return datum_file_dict
 
 
 def get_electrode_folder(project: str, data_dir: str, conversation: str) -> str:
@@ -242,125 +116,6 @@ def get_electrode_folder(project: str, data_dir: str, conversation: str) -> str:
     return os.path.join(data_dir, conversation, electrode_folder)
 
 
-def get_electrode_list(project: str, data_dir: str) -> Dict[str, List[str]]:
-    """
-    Get a dictionary containing the list of electrodes for each conversation.
-
-    Args:
-        project (str): The project name.
-        data_dir (str): The directory where the conversations are stored.
-
-    Returns:
-        Dict[str, List[str]]: A dictionary where the keys are conversation names
-        and the values are sorted lists of electrode names.
-    """
-    conversations = get_conversations(data_dir)
-    electrode_list = {
-        conversation: sorted(
-            os.listdir(get_electrode_folder(project, data_dir, conversation)),
-            key=extract_integer_suffix,
-        )
-        for conversation in conversations
-    }
-    return electrode_list
-
-
-def get_electrode_count(project: str, data_dir: str) -> int:
-    """
-    Get the count of electrodes in a project.
-
-    Parameters:
-        project (str): The name of the project.
-        data_dir (str): The directory where the project data is stored.
-
-    Returns:
-        int: The count of electrodes in the project.
-    """
-    return len(get_electrode_list(project, data_dir))
-
-
-def get_electrode_checksums(project: str, data_dir: str) -> dict:
-    """
-    Returns a dictionary containing checksums for each electrode in each conversation.
-
-    Args:
-        project (str): The name of the project.
-        data_dir (str): The directory where the data is stored.
-
-    Returns:
-        dict: A dictionary containing checksums for each electrode in each conversation.
-    """
-    electrode_checksums = defaultdict(dict)
-
-    for conversation, electrode_list in get_electrode_list(project, data_dir).items():
-        for electrode in electrode_list[:4]:
-            electrode_folder = get_electrode_folder(project, data_dir, conversation)
-            full_electrode_path = os.path.join(electrode_folder, electrode)
-            electrode_checksums[conversation][electrode] = calculate_checksum(
-                full_electrode_path
-            )
-
-    return electrode_checksums
-
-
-def add_outer_map_entry(
-    my_message: patientinfo_pb2.PatientInfo,
-    outer_map: str,
-    outer_key: str,
-    inner_key: Any,
-    inner_value: Any,
-) -> None:
-    """
-    Adds an entry to the outer map of the given message.
-
-    Args:
-        my_message (MessageType): The message to modify.
-        outer_map (str): The name of the outer map attribute in the message.
-        outer_key (Any): The key to use for the outer map entry.
-        inner_key (Any): The key to use for the inner map entry.
-        inner_value (Any): The value to use for the inner map entry.
-    """
-    outer_entry = next(
-        (
-            entry
-            for entry in getattr(my_message, outer_map)
-            if entry.outer_key == outer_key
-        ),
-        None,
-    )
-    if outer_entry is None:
-        outer_entry = getattr(my_message, outer_map).add(outer_key=outer_key)
-    outer_entry.inner_map.add(inner_key=inner_key, inner_value=inner_value)
-
-
-def pb_message_to_dict(pb_message) -> Dict[str, Dict[str, Dict[str, str]]]:
-    """
-    Convert a protobuf message to a nested dictionary.
-
-    Args:
-    pb_message: The protobuf message to convert.
-
-    Returns:
-    A nested dictionary representing the protobuf message.
-    """
-    result_dict = {}
-
-    for outer_key, outer_entry in pb_message.outer_map.items():
-        outer_dict = {}
-
-        for middle_key, middle_entry in outer_entry.middle_map.items():
-            inner_dict = {}
-
-            for inner_key, inner_entry in middle_entry.inner_map.items():
-                inner_dict[inner_key] = inner_entry.inner_value
-
-            outer_dict[middle_key] = inner_dict
-
-        result_dict[outer_key] = outer_dict
-
-    return result_dict
-
-
 def validate_flags(FLAGS):
     project = FLAGS.project
     subject = FLAGS.subject
@@ -377,12 +132,6 @@ def validate_flags(FLAGS):
         raise ValueError(f"Data directory not found: {data_dir}")
 
     return project, subject, data_dir
-
-
-def pretty_print_message(message):
-    print(json.dumps(pb_message_to_dict(message), indent=2))
-    print(json.dumps(convert_map_to_dict(message, "outer_map1"), indent=2))
-    print(json.dumps(convert_map_to_dict(message, "outer_map2"), indent=2))
 
 
 def get_datum_name_and_checksum(project, subject, conversation):
@@ -409,7 +158,7 @@ def main(_):
     """Demonstrates using the protocol buffer API."""
     project, subject, data_dir = validate_flags(FLAGS)
 
-    patient_info = patientinfo_pb2.PatientInfo()  # type: ignore
+    patient_info = patientinfo_pb2.PatientInfo()
 
     patient = patient_info.patient.add()
     patient.project = project
@@ -445,8 +194,6 @@ def main(_):
     out_filename = add_timestamp_to_filename(out_filename)
     with open(out_filename, "wb") as f:
         f.write(patient_info.SerializeToString())
-
-    print(patient_info)
 
 
 if __name__ == "__main__":
