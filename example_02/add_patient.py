@@ -2,10 +2,11 @@ from datetime import datetime
 import glob
 import hashlib
 import os
-from typing import List
+from typing import List, Tuple
 
 from absl import app
 from absl import flags
+from absl.flags._flagvalues import FlagValues
 
 import patientinfo_pb2
 
@@ -116,10 +117,24 @@ def get_electrode_folder(project: str, data_dir: str, conversation: str) -> str:
     return os.path.join(data_dir, conversation, electrode_folder)
 
 
-def validate_flags(FLAGS):
-    project = FLAGS.project
-    subject = FLAGS.subject
-    data_dir = FLAGS.data_dir
+def validate_flags(flags: FlagValues) -> Tuple[str, str, str]:
+    """
+    Validates the given flags.
+
+    Args:
+        flags (argparse.Namespace): The flags to be validated.
+
+    Raises:
+        ValueError: If the project is invalid.
+        ValueError: If the subject is invalid.
+        ValueError: If the data directory is not found.
+
+    Returns:
+        Tuple[str, str, str]: A tuple containing the validated project, subject, and data directory.
+    """
+    project: str = flags.project
+    subject: str = flags.subject
+    data_dir: str = flags.data_dir
 
     if project not in SUBJECTS:
         raise ValueError(f"Invalid project: {project}")
@@ -134,8 +149,20 @@ def validate_flags(FLAGS):
     return project, subject, data_dir
 
 
-def get_datum_name_and_checksum(project, subject, conversation):
-    datum_file, datum_checksum = "", ""
+def get_datum_name_and_checksum(project: str, subject: str, conversation: str) -> Tuple[str, str]:
+    """
+    Get the name and checksum of a datum file for a given project, subject, and conversation.
+
+    Args:
+        project: The name of the project.
+        subject: The name of the subject.
+        conversation: The path to the conversation directory.
+
+    Returns:
+        A tuple containing the name of the datum file and its checksum.
+    """
+    datum_file = ""
+    datum_checksum = ""
 
     if os.path.isdir(os.path.join(conversation, "misc")):
         datum_prefix = DATUM_FILE_MAP[project][subject]
@@ -191,7 +218,7 @@ def main(_):
 
     # Write the extracted patient info back to disk.
     out_filename = f"{project}_{subject}.pb"
-    out_filename = add_timestamp_to_filename(out_filename)
+    # out_filename = add_timestamp_to_filename(out_filename)
     with open(out_filename, "wb") as f:
         f.write(patient_info.SerializeToString())
 

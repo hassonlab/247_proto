@@ -7,34 +7,31 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
-
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-from google.protobuf import \
-    timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x11patientinfo.proto\x12\npitom_data\x1a\x1fgoogle/protobuf/timestamp.proto"\xa4\x03\n\x07Patient\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x19\n\x11number_of_folders\x18\x03 \x01(\x05\x12\x36\n\x0c\x63onversation\x18\x05 \x03(\x0b\x32 .pitom_data.Patient.Conversation\x12\x30\n\x0clast_updated\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x1a+\n\tElectrode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\t\x1aY\n\x05\x44\x61tum\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\t\x12\x30\n\telectrode\x18\x03 \x03(\x0b\x32\x1d.pitom_data.Patient.Electrode\x1a\x46\n\x0c\x43onversation\x12\x0c\n\x04name\x18\x01 \x01(\t\x12(\n\x05\x64\x61tum\x18\x02 \x01(\x0b\x32\x19.pitom_data.Patient.Datum"\'\n\tDatumType\x12\x10\n\x0c\x43ONVERSATION\x10\x00\x12\x08\n\x04PART\x10\x01"3\n\x0bPatientInfo\x12$\n\x07patient\x18\x01 \x03(\x0b\x32\x13.pitom_data.Patientb\x06proto3'
-)
+
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11patientinfo.proto\x12\npitom_data\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x03\n\x07Patient\x12\x0f\n\x07project\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x19\n\x11number_of_folders\x18\x03 \x01(\x05\x12\x36\n\x0c\x63onversation\x18\x05 \x03(\x0b\x32 .pitom_data.Patient.Conversation\x12\x30\n\x0clast_updated\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x1a+\n\tElectrode\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\t\x1aY\n\x05\x44\x61tum\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\t\x12\x30\n\telectrode\x18\x03 \x03(\x0b\x32\x1d.pitom_data.Patient.Electrode\x1a\x46\n\x0c\x43onversation\x12\x0c\n\x04name\x18\x01 \x01(\t\x12(\n\x05\x64\x61tum\x18\x02 \x01(\x0b\x32\x19.pitom_data.Patient.Datum\"\'\n\tDatumType\x12\x10\n\x0c\x43ONVERSATION\x10\x00\x12\x08\n\x04PART\x10\x01\"3\n\x0bPatientInfo\x12$\n\x07patient\x18\x01 \x03(\x0b\x32\x13.pitom_data.Patientb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "patientinfo_pb2", _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'patientinfo_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-    DESCRIPTOR._options = None
-    _globals["_PATIENT"]._serialized_start = 67
-    _globals["_PATIENT"]._serialized_end = 487
-    _globals["_PATIENT_ELECTRODE"]._serialized_start = 240
-    _globals["_PATIENT_ELECTRODE"]._serialized_end = 283
-    _globals["_PATIENT_DATUM"]._serialized_start = 285
-    _globals["_PATIENT_DATUM"]._serialized_end = 374
-    _globals["_PATIENT_CONVERSATION"]._serialized_start = 376
-    _globals["_PATIENT_CONVERSATION"]._serialized_end = 446
-    _globals["_PATIENT_DATUMTYPE"]._serialized_start = 448
-    _globals["_PATIENT_DATUMTYPE"]._serialized_end = 487
-    _globals["_PATIENTINFO"]._serialized_start = 489
-    _globals["_PATIENTINFO"]._serialized_end = 540
+  DESCRIPTOR._options = None
+  _globals['_PATIENT']._serialized_start=67
+  _globals['_PATIENT']._serialized_end=487
+  _globals['_PATIENT_ELECTRODE']._serialized_start=240
+  _globals['_PATIENT_ELECTRODE']._serialized_end=283
+  _globals['_PATIENT_DATUM']._serialized_start=285
+  _globals['_PATIENT_DATUM']._serialized_end=374
+  _globals['_PATIENT_CONVERSATION']._serialized_start=376
+  _globals['_PATIENT_CONVERSATION']._serialized_end=446
+  _globals['_PATIENT_DATUMTYPE']._serialized_start=448
+  _globals['_PATIENT_DATUMTYPE']._serialized_end=487
+  _globals['_PATIENTINFO']._serialized_start=489
+  _globals['_PATIENTINFO']._serialized_end=540
 # @@protoc_insertion_point(module_scope)
