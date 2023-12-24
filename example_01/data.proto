@@ -47,11 +47,10 @@ message OuterMapEntry_ {
 
 message Data{
     string subject_id = 1;
-    //string data_dir = 2;
-    int32 num_conversations = 3;
+    int32 num_conversations = 2;
 
-    repeated OuterMapEntry1 outer_map1 = 4;
-    repeated OuterMapEntry2 outer_map2 = 5;
-    map<string, OuterMapEntry_> outer_map = 6;
+    repeated OuterMapEntry1 outer_map1 = 3;
+    repeated OuterMapEntry2 outer_map2 = 4;
+    map<string, OuterMapEntry_> outer_map = 5;
 
 }

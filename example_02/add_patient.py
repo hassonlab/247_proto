@@ -1,17 +1,15 @@
+from collections import defaultdict
+from datetime import datetime
 import glob
 import hashlib
 import json
 import os
-from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-from absl import app, flags
+from absl import app
+from absl import flags
 
-import data_pb2
-
-EXCLUDE_WORDS = ["sp", "{lg}", "{ns}", "{LG}", "{NS}", "SP"]
-
-NON_WORDS = ["hm", "huh", "mhm", "mm", "oh", "uh", "uhuh", "um"]
+import patientinfo_pb2
 
 SUBJECTS = {
     "podcast": [
@@ -68,6 +66,13 @@ flags.mark_flag_as_required("subject")
 flags.mark_flag_as_required("data_dir")
 
 
+def add_timestamp_to_filename(filename):
+    current_time = datetime.now().strftime("%Y%m%d%H%M")
+    base_name, extension = os.path.splitext(filename)
+    new_filename = f"{base_name}_{current_time}{extension}"
+    return new_filename
+
+
 def calculate_checksum(file_path, algorithm="sha256", buffer_size=65536):
     """Calculate checksum of a file."""
     hasher = hashlib.new(algorithm)
@@ -93,8 +98,8 @@ def extract_integer_suffix(filename: str) -> int:
 
 
 def create_sample_message(
-    my_message: data_pb2.Data, project: str, subject: str, data_dir
-) -> data_pb2.Data:
+    my_message: patientinfo_pb2.PatientInfo, project: str, subject: str, data_dir
+) -> patientinfo_pb2.PatientInfo:
     """
     Creates a sample message by updating the `electrode_checksums` field in `my_message` with new values.
 
@@ -119,7 +124,9 @@ def create_sample_message(
     return my_message
 
 
-def convert_map_to_dict(data: data_pb2.Data, outer_map) -> Dict[str, Dict[str, str]]:
+def convert_map_to_dict(
+    data: patientinfo_pb2.PatientInfo, outer_map
+) -> Dict[str, Dict[str, str]]:
     """
     Convert a map object to a nested dictionary.
 
@@ -297,7 +304,7 @@ def get_electrode_checksums(project: str, data_dir: str) -> dict:
 
 
 def add_outer_map_entry(
-    my_message: data_pb2.Data,
+    my_message: patientinfo_pb2.PatientInfo,
     outer_map: str,
     outer_key: str,
     inner_key: Any,
@@ -378,37 +385,68 @@ def pretty_print_message(message):
     print(json.dumps(convert_map_to_dict(message, "outer_map2"), indent=2))
 
 
+def get_datum_name_and_checksum(project, subject, conversation):
+    datum_file, datum_checksum = "", ""
+
+    if os.path.isdir(os.path.join(conversation, "misc")):
+        datum_prefix = DATUM_FILE_MAP[project][subject]
+    else:
+        return datum_file, datum_checksum
+
+    datum_files = glob.glob(os.path.join(conversation, "misc", datum_prefix))
+
+    if len(datum_files) == 1:
+        datum_file = datum_files[0]
+    else:
+        return datum_file, datum_checksum
+
+    datum_checksum = calculate_checksum(datum_file)
+
+    return datum_file, datum_checksum
+
+
 def main(_):
+    """Demonstrates using the protocol buffer API."""
     project, subject, data_dir = validate_flags(FLAGS)
 
-    data = data_pb2.Data()
-    data.subject_id = subject
+    patient_info = patientinfo_pb2.PatientInfo()  # type: ignore
+
+    patient = patient_info.patient.add()
+    patient.project = project
+    patient.id = subject
 
     conversations = get_conversations(data_dir)
-    data.num_conversations = len(conversations)
+    patient.number_of_folders = len(conversations)
 
-    # Adding conversations
-    for idx, conversation in enumerate(conversations):
-        add_outer_map_entry(
-            data, "outer_map1", "conversations", f"{idx:03}", conversation
+    for conversation_path in conversations[:3]:
+        conversation = patient.conversation.add()
+        conversation.name = os.path.basename(conversation_path)
+
+        datum_name, datum_checksum = get_datum_name_and_checksum(
+            project, subject, conversation_path
         )
+        conversation.datum.name = os.path.basename(datum_name)
+        conversation.datum.checksum = datum_checksum
 
-    # Adding datum checksums
-    for k, v in get_datum_checksums(project, data_dir, subject).items():
-        add_outer_map_entry(data, "outer_map1", "datum_checksums", k, v)
+        electrode_folder = get_electrode_folder(project, data_dir, conversation_path)
+        electrode_file_list = sorted(
+            glob.glob(os.path.join(electrode_folder, "*.mat")),
+            key=extract_integer_suffix,
+        )
+        for electrode_file in electrode_file_list[:4]:
+            electrode_checksum = calculate_checksum(electrode_file)
 
-    # Adding electrode counts
-    for k, v in get_electrode_list(project, data_dir).items():
-        add_outer_map_entry(data, "outer_map2", "electrode_counts", k, len(v))
+            electrode = conversation.datum.electrode.add()
+            electrode.name = os.path.basename(electrode_file)
+            electrode.checksum = electrode_checksum
 
-    # Adding electrode checksums
-    sample_message = create_sample_message(data, project, subject, data_dir)
+    # Write the extracted patient info back to disk.
+    out_filename = f"{project}_{subject}.pb"
+    out_filename = add_timestamp_to_filename(out_filename)
+    with open(out_filename, "wb") as f:
+        f.write(patient_info.SerializeToString())
 
-    # Print the serialized message
-    print("Serialized Message:")
-    print(sample_message)
-
-    pretty_print_message(sample_message)
+    print(patient_info)
 
 
 if __name__ == "__main__":

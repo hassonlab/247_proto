@@ -1,0 +1,40 @@
+people {
+  project: "tfs" 
+  id: 625
+  number_of_folders : 54
+  type: CONVERSATIONS
+  conversation {
+    name: conversation1_name
+    datum {
+      name: datum_name
+      checksum: datum_checksum
+    }
+    electrodes {
+      name: electrode1_name
+      id: 1
+      checksum: electrode1_checksum
+    }
+    electrodes {
+      name: electrode1_name
+      id: 2
+      checksum: electrode2_checksum
+    }
+  }
+  conversation {
+    name: conversation2_name
+    datum {
+      name: datum_name
+      checksum: datum_checksum
+    }
+    electrodes {
+      name: electrode1_name
+      id: 1
+      checksum: electrode1_checksum
+    }
+    electrodes {
+      name: electrode1_name
+      id: 2
+      checksum: electrode2_checksum
+    }
+  }
+}
