@@ -57,15 +57,57 @@ flags.mark_flag_as_required("subject")
 flags.mark_flag_as_required("data_dir")
 
 
-def add_timestamp_to_filename(filename):
-    current_time = datetime.now().strftime("%Y%m%d%H%M")
-    base_name, extension = os.path.splitext(filename)
-    new_filename = f"{base_name}_{current_time}{extension}"
-    return new_filename
+def get_out_filename(project: str, subject: str, data_dir: str) -> str:
+    """
+    Generates the output filename for a given project and subject.
+
+    Args:
+        project: The name of the project.
+        subject: The subject of the data.
+        data_dir: The directory where the data is stored.
+
+    Returns:
+        The output filename with a timestamp.
+
+    """
+    parent_dir = os.path.dirname(os.path.normpath(data_dir))
+    out_filename = os.path.join(parent_dir, f"{project}_{subject}.pb")
+    # out_filename = add_timestamp_to_filename(out_filename)
+
+    return out_filename
 
 
-def calculate_checksum(file_path, algorithm="sha256", buffer_size=65536):
-    """Calculate checksum of a file."""
+def add_timestamp_to_filename(filename: str) -> str:
+    """
+    Adds a timestamp to the given filename.
+
+    Args:
+        filename: The filename to add a timestamp to.
+
+    Returns:
+        The filename with a timestamp appended.
+
+    """
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename_with_timestamp = f"{filename}_{timestamp}"
+    return filename_with_timestamp
+
+
+def calculate_checksum(
+    file_path: str, algorithm: str = "sha256", buffer_size: int = 65536
+) -> str:
+    """Calculate the checksum of a file.
+
+    Args:
+        file_path (str): The path of the file.
+        algorithm (str, optional): The hashing algorithm to use. Defaults to
+          "sha256".
+        buffer_size (int, optional): The buffer size for reading the file.
+          Defaults to 65536.
+
+    Returns:
+        str: The checksum of the file.
+    """
     hasher = hashlib.new(algorithm)
     with open(file_path, "rb") as file:
         buffer = file.read(buffer_size)
@@ -149,7 +191,9 @@ def validate_flags(flags: FlagValues) -> Tuple[str, str, str]:
     return project, subject, data_dir
 
 
-def get_datum_name_and_checksum(project: str, subject: str, conversation: str) -> Tuple[str, str]:
+def get_datum_name_and_checksum(
+    project: str, subject: str, conversation: str
+) -> Tuple[str, str]:
     """
     Get the name and checksum of a datum file for a given project, subject, and conversation.
 
@@ -192,7 +236,7 @@ def main(_):
     patient.id = subject
 
     conversations = get_conversations(data_dir)
-    patient.number_of_folders = len(conversations)
+    # patient.number_of_folders = len(conversations)
 
     for conversation_path in conversations[:3]:
         conversation = patient.conversation.add()
@@ -217,8 +261,8 @@ def main(_):
             electrode.checksum = electrode_checksum
 
     # Write the extracted patient info back to disk.
+    # out_filename = get_out_filename(project, subject, data_dir)
     out_filename = f"{project}_{subject}.pb"
-    # out_filename = add_timestamp_to_filename(out_filename)
     with open(out_filename, "wb") as f:
         f.write(patient_info.SerializeToString())
 

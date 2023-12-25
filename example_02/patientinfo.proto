@@ -7,14 +7,14 @@ import "google/protobuf/timestamp.proto";
 
 // [START messages]
 message Patient {
-  enum DatumType {
-    CONVERSATION = 0;
-    PART = 1;
-  }
+  // enum DatumType {
+  //   CONVERSATION = 0;
+  //   PART = 1;
+  // }
   
   string project = 1;  // podcast or 247 (tfs)
   string id = 2;  
-  int32 number_of_folders = 3;
+  // int32 number_of_folders = 3;
   // DatumType datum_type = 4;  // part or conversation
   
   message Electrode {

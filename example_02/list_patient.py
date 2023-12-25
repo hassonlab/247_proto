@@ -8,7 +8,8 @@ flags.DEFINE_string("input_file", None, "Input file to deserialize")
 flags.mark_flag_as_required("input_file")
 
 
-from typing import List, Any
+from typing import Any
+
 
 def list_patient(patient_info: Any) -> None:
     """
@@ -23,7 +24,8 @@ def list_patient(patient_info: Any) -> None:
     for patient in patient_info.patient:
         print("Project:", patient.project)
         print("Patient ID:", patient.id)
-        print("Number of folders:", patient.number_of_folders)
+        # print("Number of folders:", patient.number_of_folders)
+
         for conversation in patient.conversation:
             print("  Folder name:", conversation.name)
             print("    Datum:", conversation.datum.name)
