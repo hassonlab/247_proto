@@ -1,7 +1,7 @@
 from absl import app
 from absl import flags
 
-import patientinfo_pb2
+import patient_info_pb2
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("input_file", None, "Input file to deserialize")
@@ -11,7 +11,7 @@ flags.mark_flag_as_required("input_file")
 from typing import Any
 
 
-def list_patient(patient_info: Any) -> None:
+def list_patient(patient_info: patient_info_pb2.PatientInfo) -> None:
     """
     Print information about patients and their conversations.
 
@@ -21,16 +21,15 @@ def list_patient(patient_info: Any) -> None:
     Returns:
         None
     """
-    for patient in patient_info.patient:
-        print("Project:", patient.project)
-        print("Patient ID:", patient.id)
-        # print("Number of folders:", patient.number_of_folders)
+    for patient in patient_info.patients:
+        print("Project:", patient.project_type)
+        print("Patient ID:", patient.patient_id)
 
-        for conversation in patient.conversation:
+        for conversation in patient.conversations:
             print("  Folder name:", conversation.name)
             print("    Datum:", conversation.datum.name)
             print("    Checksum:", conversation.datum.checksum)
-            for electrode in conversation.datum.electrode:
+            for electrode in conversation.datum.electrodes:
                 print("      Electrode:", electrode.name)
                 print("        Checksum:", electrode.checksum)
 
@@ -38,7 +37,7 @@ def list_patient(patient_info: Any) -> None:
 def main(_):
     # Reads the patient information from a file and prints the information.
     input_file = FLAGS.input_file
-    patient_info = patientinfo_pb2.PatientInfo()
+    patient_info = patient_info_pb2.PatientInfo()
 
     with open(input_file, "rb") as f:
         patient_info.ParseFromString(f.read())

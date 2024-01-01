@@ -8,7 +8,7 @@ from absl import app
 from absl import flags
 from absl.flags._flagvalues import FlagValues
 
-import patientinfo_pb2
+import patient_info_pb2
 
 SUBJECTS = {
     "podcast": [
@@ -229,17 +229,18 @@ def main(_):
     """Demonstrates using the protocol buffer API."""
     project, subject, data_dir = validate_flags(FLAGS)
 
-    patient_info = patientinfo_pb2.PatientInfo()
+    patient_info = patient_info_pb2.PatientInfo()
 
-    patient = patient_info.patient.add()
-    patient.project = project
-    patient.id = subject
+    patient = patient_info.patients.add()
+    # patient.project_type = patient_info_pb2.Patient.TFS
+    patient.project_type = project
+    patient.patient_id = subject
 
     conversations = get_conversations(data_dir)
     # patient.number_of_folders = len(conversations)
 
     for conversation_path in conversations[:3]:
-        conversation = patient.conversation.add()
+        conversation = patient.conversations.add()
         conversation.name = os.path.basename(conversation_path)
 
         datum_name, datum_checksum = get_datum_name_and_checksum(
@@ -253,10 +254,10 @@ def main(_):
             glob.glob(os.path.join(electrode_folder, "*.mat")),
             key=extract_integer_suffix,
         )
-        for electrode_file in electrode_file_list[:4]:
+        for electrode_file in electrode_file_list[:2]:
             electrode_checksum = calculate_checksum(electrode_file)
 
-            electrode = conversation.datum.electrode.add()
+            electrode = conversation.datum.electrodes.add()
             electrode.name = os.path.basename(electrode_file)
             electrode.checksum = electrode_checksum
 
@@ -266,6 +267,7 @@ def main(_):
     with open(out_filename, "wb") as f:
         f.write(patient_info.SerializeToString())
 
+    # print(patient_info)
 
 if __name__ == "__main__":
     app.run(main)
