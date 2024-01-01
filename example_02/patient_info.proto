@@ -4,14 +4,14 @@ package pitom_data;
 // [END declaration]
 
 // [START messages]
+enum ProjectType {
+  PODCAST = 0;
+  TFS = 1;
+}
+
 message Patient {
-  // enum ProjectType {
-  //   PODCAST = 0;
-  //   TFS = 1;
-  // }
-  
-  string project_type = 1;
-  string patient_id = 2;  
+  ProjectType project_type = 1;
+  string patient_id = 2;
   
   message Electrode {
     string name = 1;

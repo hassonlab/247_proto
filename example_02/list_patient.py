@@ -22,7 +22,13 @@ def list_patient(patient_info: patient_info_pb2.PatientInfo) -> None:
         None
     """
     for patient in patient_info.patients:
-        print("Project:", patient.project_type)
+
+        if patient.project_type == patient_info_pb2.PODCAST:
+            project_type = "podcast"
+        else:
+            project_type = "tfs"
+
+        print("Project:", project_type)
         print("Patient ID:", patient.patient_id)
 
         for conversation in patient.conversations:

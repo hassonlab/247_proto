@@ -232,14 +232,16 @@ def main(_):
     patient_info = patient_info_pb2.PatientInfo()
 
     patient = patient_info.patients.add()
-    # patient.project_type = patient_info_pb2.Patient.TFS
-    patient.project_type = project
+    
+    if project == "podcast":
+        patient.project_type = patient_info_pb2.PODCAST
+    else:
+        patient.project_type = patient_info_pb2.TFS
     patient.patient_id = subject
 
     conversations = get_conversations(data_dir)
-    # patient.number_of_folders = len(conversations)
 
-    for conversation_path in conversations[:3]:
+    for conversation_path in conversations[:2]:
         conversation = patient.conversations.add()
         conversation.name = os.path.basename(conversation_path)
 
@@ -266,8 +268,6 @@ def main(_):
     out_filename = f"{project}_{subject}.pb"
     with open(out_filename, "wb") as f:
         f.write(patient_info.SerializeToString())
-
-    # print(patient_info)
 
 if __name__ == "__main__":
     app.run(main)
